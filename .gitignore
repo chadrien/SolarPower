@@ -1,0 +1,3 @@
+# Local release build output (see scripts/build-release.sh)
+/dist/
+SolarPower.zip

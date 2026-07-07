@@ -1,19 +1,25 @@
-local L = AceLibrary("AceLocale-2.2"):new("PallyPower");
+local L = AceLibrary("AceLocale-2.2"):new("SolarPower");
 
-PallyPower.options = {
+SolarPower.options = {
 	type = "group",
 	args = {
 		config = {
 		    name = L["BAS"],
 			type = "execute",
 			desc = L["BAS_DESC"],
-			func = function() PallyPowerConfig_Toggle() end,
+			func = function() SolarPowerConfig_Toggle() end,
 		},
 		report = {
 			name = L["BRPT"],
 			type = "execute",
 			desc = L["BRPT_DESC"],
-			func = function() PallyPower:Report() end,
+			func = function() SolarPower:Report() end,
+		},
+		dumpclass = {
+			name = "dumpclass",
+			type = "execute",
+			desc = L["DUMPCLASS_DESC"],
+			func = function() SolarPower:DumpClassToken("target") end,
 		},
 		buffscale = {
 			name = L["BSC"],
@@ -39,7 +45,7 @@ PallyPower.options = {
 			name = L["RESET"],
 			type = "execute",
 			desc = L["RESET_DESC"],
-			func = function() PallyPower:Reset() end,			
+			func = function() SolarPower:Reset() end,			
 		},
 		smartbuff = {
 			name = L["SBUFF"],
@@ -117,7 +123,7 @@ PallyPower.options = {
 					type = "range",
 					desc = L["DISPCOL_DESC"],
 					min = 1,
-					max = (PallyPower.IsVanilla and 9) or (PallyPower.IsTBC and 10) or 11,
+					max = (SolarPower.IsVanilla and 9) or (SolarPower.IsTBC and 10) or 11,
 					step = 1,
 					get = "displayColumns",
 					set = "displayColumns",	
@@ -127,7 +133,7 @@ PallyPower.options = {
 					type = "range",
 					desc = L["DISPROWS_DESC"],
 					min = 1,
-					max = (PallyPower.IsVanilla and 9) or (PallyPower.IsTBC and 10) or 11,
+					max = (SolarPower.IsVanilla and 9) or (SolarPower.IsTBC and 10) or 11,
 					step = 1,
 					get = "displayRows",
 					set = "displayRows",	
@@ -164,7 +170,7 @@ PallyPower.options = {
 							"Top Left", 
 							"Bottom Left", 
 							"Bottom Right"},
-					disabled = function() return PallyPower.opt.layout ~= "Standard" end,
+					disabled = function() return SolarPower.opt.layout ~= "Standard" end,
 				},
 				palign = {
 					name = L["DISPPL"],
@@ -280,11 +286,11 @@ PallyPower.options = {
 							type = "text",
 							validate = "keybinding",
 							set = function(value)
-									PallyPower:UnbindKeys()
-									PallyPower.opt.autobuff.autokey1 = value
-									PallyPower:BindKeys()
+									SolarPower:UnbindKeys()
+									SolarPower.opt.autobuff.autokey1 = value
+									SolarPower:BindKeys()
 								  end,
-							get = function() return PallyPower.opt.autobuff.autokey1 end
+							get = function() return SolarPower.opt.autobuff.autokey1 end
 						},
 						autokey2 = {
 							name = L["AUTOKEY2"],
@@ -292,11 +298,11 @@ PallyPower.options = {
 							type = "text",
 							validate = "keybinding",
 							set = function(value)
-									PallyPower:UnbindKeys()
-									PallyPower.opt.autobuff.autokey2 = value
-									PallyPower:BindKeys()
+									SolarPower:UnbindKeys()
+									SolarPower.opt.autobuff.autokey2 = value
+									SolarPower:BindKeys()
 								  end,
-							get = function() return PallyPower.opt.autobuff.autokey2 end
+							get = function() return SolarPower.opt.autobuff.autokey2 end
 						},
 						autobutton = {
 							name = L["AUTOBTN"],
@@ -322,56 +328,6 @@ PallyPower.options = {
 						},
 					},
 				},
-				rfs ={
-					name = L["RFBUFF"],
-					type = "group",
-					desc = L["RFBUFF"],
-					args = {
-						rfbuff = {
-							name = L["RFBUFF"],
-							type = "toggle",
-							desc = L["RFBUFF_DESC"],
-							get = "ToggleRFButton",
-							set = "ToggleRFButton",
-							map = {
-								[false]=L["DISABLED"],
-								[true] = L["ENABLED"]
-							},
-						},
-						seal = {
-							name = L["SEAL"],
-							type = "range",
-							desc = L["SEAL_DESC"],
-							get = "ToggleSeal",
-							set = "ToggleSeal",
-							min = 1,
-							max = 9,
-							step = 1,
-						},
-						rfury = {
-							name = L["RFUSE"],
-							type = "toggle",
-							desc = L["RFUSE_DESC"],
-							get = "ToggleRF",
-							set = "ToggleRF",
-							map = {
-								[false]=L["DISABLED"],
-								[true] = L["ENABLED"]
-							},
-						},
-					},
-				},
-				auras = {
-					name = L["AURAS"],
-					type = "toggle",
-					desc = L["AURAS_DESC"],
-					get = "ToggleAuras",
-					set = "ToggleAuras",
-					map = {
-						[false]=L["DISABLED"],
-						[true] = L["ENABLED"]
-					},
-				},
 				extras = {
 					name = L["IGNOREEXTRA"],
 					type = "toggle",
@@ -388,169 +344,147 @@ PallyPower.options = {
 	},
 }
 
-function PallyPower:BuffScale(value)
+function SolarPower:BuffScale(value)
 	if not value then return self.opt.buffscale end
 	self.opt.buffscale = value;
-	PallyPower:UpdateLayout();
+	SolarPower:UpdateLayout();
 end
 
-function PallyPower:ConfigScale(value)
+function SolarPower:ConfigScale(value)
 	if not value then return self.opt.configscale end
 	self.opt.configscale = value;
 end
 
-function PallyPower:skinButtons(value)
+function SolarPower:skinButtons(value)
 	if not value then
 		return self.opt.skin
 	else
     	self.opt.skin = value
-		PallyPower:ApplySkin(value)
+		SolarPower:ApplySkin(value)
 	end
 end
 
-function PallyPower:ToggleEdges(value)
+function SolarPower:ToggleEdges(value)
 	if type(value) == "nil" then return self.opt.display.edges end
 	self.opt.display.edges = value
-	PallyPower:ApplySkin(self.opt.skin)	
+	SolarPower:ApplySkin(self.opt.skin)	
 end
 
-function PallyPower:layout(value)
+function SolarPower:layout(value)
 	if not value then
 		return self.opt.layout;
 	else
     	self.opt.layout = value;
-		PallyPower:UpdateLayout();
+		SolarPower:UpdateLayout();
 	end
 end
-function PallyPower:displayRows(value)
+function SolarPower:displayRows(value)
 	if not value then return self.opt.display.rows end
 	self.opt.display.rows = value;
-	PallyPower:UpdateLayout();
+	SolarPower:UpdateLayout();
 end
 
-function PallyPower:displayColumns(value)
+function SolarPower:displayColumns(value)
 	if not value then return self.opt.display.columns end
 	self.opt.display.columns = value;
-	PallyPower:UpdateLayout();
+	SolarPower:UpdateLayout();
 end
 
-function PallyPower:displayGapping(value)
+function SolarPower:displayGapping(value)
 	if not value then return self.opt.display.gapping end
 	self.opt.display.gapping = value
-	PallyPower:UpdateLayout();
+	SolarPower:UpdateLayout();
 end
 
-function PallyPower:displayAlignClassButtons(value)
+function SolarPower:displayAlignClassButtons(value)
 	if not value then return self.opt.display.alignClassButtons end
 	self.opt.display.alignClassButtons = value
-	PallyPower:UpdateLayout();
+	SolarPower:UpdateLayout();
 end
 
-function PallyPower:displayAlignPlayerButtons(value)
+function SolarPower:displayAlignPlayerButtons(value)
 	if not value then return self.opt.display.alignPlayerButtons end
 	self.opt.display.alignPlayerButtons = value;
-	PallyPower:UpdateLayout();
+	SolarPower:UpdateLayout();
 end
 
-function PallyPower:ToggleSmartBuffs(value)
+function SolarPower:ToggleSmartBuffs(value)
 	if type(value) == "nil" then return self.opt.smartbuffs end
 	self.opt.smartbuffs = value;
 end
 
-function PallyPower:ToggleSmartPets(value)
+function SolarPower:ToggleSmartPets(value)
 	if type(value) == "nil" then return self.opt.smartpets end
 	self.opt.smartpets = value;
 end
 
-function PallyPower:ToggleRFButton(value)
-	if type(value) == "nil" then return self.opt.rfbuff end
-	self.opt.rfbuff = value
-	PallyPower:UpdateLayout()
-end
-
-function PallyPower:ToggleRF(value)
-	if type(value) == "nil" then return self.opt.rf end
-	self.opt.rf = value
-	PallyPower:RFAssign(self.opt.rf)
-end
-
-function PallyPower:ToggleSeal(value)
-	if type(value) == "nil" then return self.opt.seal end
-	self.opt.seal = value
-	PallyPower:SealAssign(self.opt.seal)
-end
-
-function PallyPower:ToggleFA(value)
+function SolarPower:ToggleFA(value)
 	if type(value) == "nil" then return self.opt.freeassign end
 	self.opt.freeassign = value
-	PallyPower:UpdateLayout()
+	SolarPower:UpdateLayout()
 end
 
-function PallyPower:ToggleShowParty(value)
+function SolarPower:ToggleShowParty(value)
 	if type(value) == "nil" then return self.opt.ShowInParty end
-	self.opt.ShowInParty = value;
+	self.opt.ShowInParty = value
+	self:UpdateRoster()
 end
 
-function PallyPower:ToggleShowSingle(value)
+function SolarPower:ToggleShowSingle(value)
 	if type(value) == "nil" then return self.opt.ShowWhenSingle end
-	self.opt.ShowWhenSingle = value;
+	self.opt.ShowWhenSingle = value
+	self:UpdateRoster()
 end
 
-function PallyPower:ToggleDragHandle(value)
+function SolarPower:ToggleDragHandle(value)
 	if type(value) == "nil" then return self.opt.display.hideDragHandle end
 	self.opt.display.hideDragHandle = value;
-	PallyPower:UpdateLayout();
+	SolarPower:UpdateLayout();
 end
 
-function PallyPower:TogglePlayerButtons(value)
+function SolarPower:TogglePlayerButtons(value)
 	if type(value) == "nil" then return self.opt.display.hidePlayerButtons end
 	self.opt.display.hidePlayerButtons = value;
-	PallyPower:UpdateLayout();
+	SolarPower:UpdateLayout();
 end
 
-function PallyPower:ToggleClassButtons(value)
-	if type(value) == "nil" then return self.opt.hideClassButtons end
-	self.opt.hideClassButtons = value;
-	PallyPower:UpdateLayout();	
+function SolarPower:ToggleClassButtons(value)
+	if type(value) == "nil" then return self.opt.display.hideClassButtons end
+	self.opt.display.hideClassButtons = value
+	SolarPower:UpdateLayout()
 end
 
-function PallyPower:ToggleFlashBuffAutoButtons(value)
-	if type(value) == "nil" then return self.opt.flashBuffAutoButtons end
-	self.opt.flashBuffAutoButtons = value;
-	PallyPower:UpdateLayout();
+function SolarPower:ToggleFlashBuffAutoButtons(value)
+	if type(value) == "nil" then return self.opt.display.flashBuffAutoButtons end
+	self.opt.display.flashBuffAutoButtons = value
+	SolarPower:UpdateLayout()
 end
 
-function PallyPower:ToggleClassColor(value)
-	if type(value) == "nil" then return self.opt.classColor end
-	self.opt.classColor = value;
-	PallyPower:UpdateLayout();
+function SolarPower:ToggleClassColor(value)
+	if type(value) == "nil" then return self.opt.display.classColor end
+	self.opt.display.classColor = value
+	SolarPower:UpdateLayout()
 end
 
-function PallyPower:ToggleNameClassColor(value)
-	if type(value) == "nil" then return self.opt.nameClassColor end
-	self.opt.nameClassColor = value;
-	PallyPower:UpdateLayout();
+function SolarPower:ToggleNameClassColor(value)
+	if type(value) == "nil" then return self.opt.display.nameClassColor end
+	self.opt.display.nameClassColor = value
+	SolarPower:UpdateLayout()
 end
 
-function PallyPower:ToggleAutoButton(value)
+function SolarPower:ToggleAutoButton(value)
 	if type(value) == "nil" then return self.opt.autobuff.autobutton end
 	self.opt.autobuff.autobutton = value;
-	PallyPower:UpdateLayout();
+	SolarPower:UpdateLayout();
 end
 
-function PallyPower:ToggleWaitPeople(value)
+function SolarPower:ToggleWaitPeople(value)
 	if type(value) == "nil" then return self.opt.autobuff.waitforpeople end
 	self.opt.autobuff.waitforpeople = value;
 end
 
-function PallyPower:ToggleAuras(value)
-	if type(value) == "nil" then return self.opt.auras end
-	self.opt.auras = value;
-	PallyPower:UpdateLayout();
-end
-
-function PallyPower:ToggleExtras(value)
+function SolarPower:ToggleExtras(value)
 	if type(value) == "nil" then return self.opt.extras end
 	self.opt.extras = value;
-	PallyPower:UpdateRoster();
+	SolarPower:UpdateRoster();
 end
