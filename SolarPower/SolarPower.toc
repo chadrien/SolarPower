@@ -1,0 +1,24 @@
+﻿## Interface: 30300
+## Author: chadrien
+## Title: SolarPower
+## Version: x.x.x
+## Notes: Raid/Party Sun Cleric Devotions for Project Ascension CoA
+## DefaultState: enabled
+## Dependencies:
+## OptionalDeps: Ace2, RosterLib, DewdropLib
+## X-Category: Class
+## X-Embeds: Ace2, RosterLib, DewdropLib
+## SavedVariables: SolarPowerDB, SolarPower_Assignments, SolarPower_NormalAssignments, SolarPower_AuraAssignments, SolarPower_SavedPresets
+
+#@no-lib-strip@
+embeds.xml
+#@end-no-lib-strip@
+
+locale\enUS.lua
+
+SolarPower.lua
+CoAClasses.lua
+SpellConfig.lua
+SolarPowerValues.lua
+SolarPowerOptions.lua
+SolarPower.xml

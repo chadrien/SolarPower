@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate TOC
+        run: |
+          test -f SolarPower/SolarPower.toc
+          grep -q '## Interface: 30300' SolarPower/SolarPower.toc
+          grep -qE '^## Version: (x\.x\.x|[0-9]+\.[0-9]+\.[0-9]+)$' SolarPower/SolarPower.toc
+
+      - name: Install luacheck
+        run: sudo apt-get update && sudo apt-get install -y luarocks && sudo luarocks install luacheck
+
+      - name: Luacheck addon Lua
+        run: |
+          luacheck SolarPower/*.lua \
+            --no-color \
+            --no-max-line-length \
+            --exclude-files SolarPower/libs
