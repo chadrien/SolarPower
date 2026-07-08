@@ -2,7 +2,7 @@
 
 Raid and party **Devotion** manager for **Sun Clerics** on Project Ascension **Conqueror of Azeroth** (CoA).
 
-SolarPower is a PallyPower-style addon for WoW 3.3.5a: assign Devotion of Dawn and Devotion of Grace per CoA class, see missing-buff indicators, auto-buff with hotkeys, and sync assignments between Sun Clerics in your group.
+SolarPower is a PallyPower-style addon for WoW 3.3.5a: assign Devotion of Dawn, Devotion of Grace, and Devotion of Radiance per CoA class, see missing-buff indicators, auto-buff with hotkeys, and sync assignments between Sun Clerics in your group.
 
 ## Requirements
 
@@ -39,7 +39,7 @@ Class rows use provisional tokens from the CoA wiki (indices 23–43). If a clas
 
 ## Devotion spell IDs
 
-Configured in `SolarPower/SpellConfig.lua`. Grace supports rank 1 and rank 2 aura IDs. Greater Devotions and a third devotion type are reserved for future updates.
+Configured in `SolarPower/SpellConfig.lua`. Current setup includes Dawn, Grace, and Radiance.
 
 ## Credits
 
