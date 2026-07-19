@@ -21,6 +21,13 @@ SolarPower.Devotions = {
 		icon = "Interface\\Icons\\Devotion_of_Dawnbreak",
 		duration = 1800,
 	},
+	{
+		key = "radiance",
+		name = "Devotion of Emperors",
+		spellIds = { 572552 },
+		icon = "Interface\\Icons\\Devotion_of_Emperors",
+		duration = 1800,
+	},
 }
 
 -- Build aura spellId -> devotion index lookup
