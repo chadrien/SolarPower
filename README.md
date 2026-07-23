@@ -25,6 +25,7 @@ Saved variables use the `SolarPower*` prefix (not `PallyPower*`).
 | Command | Description |
 |---------|-------------|
 | `/solarpower` or `/sp` | Open options |
+| `/sp test` or `/sp testmode` | Toggle test mode (spawn test players to try hover/UI without a group) |
 | `/sp dumpclass` | Print `TOKEN=index` for your target (`/sp dumpclass party1`, etc.) |
 
 **Buff bar:** class grid shows CoA classes present in your group. Colors indicate missing devotions. Click a class to buff; use player popout buttons for individuals.

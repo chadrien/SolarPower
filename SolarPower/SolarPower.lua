@@ -45,6 +45,14 @@ local raid_units = {}
 local leaders = {}
 local roster = {}
 
+-- test mode
+local testMode = false
+local testPlayers = {}
+
+-- track currently active class button
+local activeClassButton = nil
+local previousClassNum = nil
+
 do
 	table.insert(party_units, "player")
 	table.insert(party_units, "pet")
@@ -99,6 +107,10 @@ function SolarPower:HookSlashCommand()
 		end
 		if msg == "dumpclass" then
 			self:DumpClassToken("target")
+			return
+		end
+		if msg == "test" or msg == "testmode" then
+			self:ToggleTestMode()
 			return
 		end
 		return aceHandler(msg, editBox)
@@ -1394,6 +1406,9 @@ function SolarPower:ShouldIDisplay()
 end
 
 function SolarPower:GetNumUnits()
+	if testMode then
+		return self:GetNumUnitsTest()
+	end
 	if GetNumRaidMembers() > 0 then
 		return GetNumRaidMembers()
 	end
@@ -1428,43 +1443,67 @@ function SolarPower:UpdateRoster()
 
 	if num > 0 then
 		num = 0
-		if GetNumRaidMembers() == 0 then
-			isInRaid = false
-			units = party_units
-		else
-			isInRaid = true
-			units = raid_units
-		end
-
-		twipe(roster)
-		twipe(leaders)
-
-		for _, unitid in ipairs(units) do
-			--SolarPower:Print(unitid)
-			if unitid and UnitExists(unitid) then
-				local tmp = {}
+		if testMode then
+			-- Test mode: use test players
+			twipe(roster)
+			twipe(leaders)
+			for _, unit in ipairs(testPlayers) do
 				num = num + 1
-				tmp.unitid = unitid
-				tmp.name = UnitName(unitid)
-
-				local isPet = unitid:find("pet")
-
-				if isPet then
-					tmp.class = "PET"
-				else
-					tmp.class = select(2, UnitClass(unitid))
+				tinsert(roster, unit)
+				if unit.rank > 0 then
+					leaders[unit.name] = true
 				end
-
-				if isInRaid then
-					local n = select(3, unitid:find("(%d+)"))
-					--SolarPower:Print("n="..n)
-					tmp.rank, tmp.subgroup = select(2, GetRaidRosterInfo(n))
-				else
-					tmp.rank = UnitIsPartyLeader(unitid) and 2 or 0
-					tmp.subgroup = 1
+				for i = 1, SOLARPOWER_MAXCLASSES do
+					if unit.class == self.ClassID[i] then
+						unit.visible = true
+						unit.hasbuff = false
+						unit.hasclassbuff = false
+						unit.specialbuff = false
+						unit.dead = false
+						classlist[i] = classlist[i] + 1
+						tinsert(classes[i], unit)
+					end
 				end
+			end
+		else
+			-- Normal mode: use actual raid/party units
+			if GetNumRaidMembers() == 0 then
+				isInRaid = false
+				units = party_units
+			else
+				isInRaid = true
+				units = raid_units
+			end
 
-				if tmp.rank > 0 then
+			twipe(roster)
+			twipe(leaders)
+
+			for _, unitid in ipairs(units) do
+				--SolarPower:Print(unitid)
+				if unitid and UnitExists(unitid) then
+					local tmp = {}
+					num = num + 1
+					tmp.unitid = unitid
+					tmp.name = UnitName(unitid)
+
+					local isPet = unitid:find("pet")
+
+					if isPet then
+						tmp.class = "PET"
+					else
+						tmp.class = select(2, UnitClass(unitid))
+					end
+
+					if isInRaid then
+						local n = select(3, unitid:find("(%d+)"))
+						--SolarPower:Print("n="..n)
+						tmp.rank, tmp.subgroup = select(2, GetRaidRosterInfo(n))
+					else
+						tmp.rank = UnitIsPartyLeader(unitid) and 2 or 0
+						tmp.subgroup = 1
+					end
+
+					if tmp.rank > 0 then
 					leaders[tmp.name] = true
 				end
 
@@ -1520,6 +1559,7 @@ function SolarPower:UpdateRoster()
 				end
 			end
 		end
+		end -- end else block for testMode
 	end
 
 	self:UpdateLayout()
@@ -1550,6 +1590,44 @@ function SolarPower:ScanClass(classID)
 			unit.specialbuff = spellID ~= gspellID and spellID ~= 0
 		end
 	end
+end
+
+function SolarPower:ToggleTestMode()
+	testMode = not testMode
+	if testMode then
+		self:Print("Test mode ON - use |cffFFFF00/sp test|r to toggle")
+		self:GenerateTestPlayers()
+		self:UpdateRoster()
+	else
+		self:Print("Test mode OFF")
+		self:UpdateRoster()
+	end
+end
+
+function SolarPower:GenerateTestPlayers()
+	testPlayers = {}
+	local classTokens = {
+		"NECROMANCER", "PYROMANCER", "CULTIST", "STARCALLER", "SUNCLERIC", "TINKER",
+		"SPIRITMAGE", "WILDWALKER", "PROPHET", "CHRONOMANCER", "GUARDIAN", "STORMBRINGER"
+	}
+	for i, classToken in ipairs(classTokens) do
+		testPlayers[i] = {
+			name = classToken .. i,
+			class = classToken,
+			unitid = "test" .. i,
+			rank = i <= 2 and 2 or 0,
+			subgroup = 1,
+			visible = true,
+			dead = false,
+			hasbuff = false,
+			hasclassbuff = false,
+			specialbuff = false
+		}
+	end
+end
+
+function SolarPower:GetNumUnitsTest()
+	return #testPlayers
 end
 
 function SolarPower:CreateLayout()
@@ -1601,8 +1679,32 @@ function SolarPower:CreateLayout()
 	                                  ]])
 
 	    cButton:SetAttribute("_onstate-inactive", [[
-													childs[1]:Hide()
+													for _, child in ipairs(childs) do
+														child:Hide()
+													end
 												 ]])
+		
+		-- Lua wrapper to hide previous players when entering a new class button
+		cButton:HookScript("OnEnter", function(button)
+			-- Hide players from the previously active class
+			if previousClassNum and previousClassNum ~= cbNum then
+				for pbNum = 1, SOLARPOWER_MAXPERCLASS do
+					local pButton = SolarPower.playerButtons[previousClassNum][pbNum]
+					if pButton then
+						pButton:Hide()
+					end
+				end
+			end
+			activeClassButton = button
+			button.classNum = cbNum
+		end)
+		
+		cButton:HookScript("OnLeave", function(button)
+			if activeClassButton == button then
+				previousClassNum = button.classNum
+				activeClassButton = nil
+			end
+		end)
 		cButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
 		cButton:EnableMouseWheel(1)
         self.classButtons[cbNum] = cButton
